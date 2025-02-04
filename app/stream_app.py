@@ -8,20 +8,6 @@ if 'api_key' not in st.session_state:
 
 def display_pdf(uploaded_file):
 
-    """
-    Display a PDF file that has been uploaded to Streamlit.
-
-    The PDF will be displayed in an iframe, with the width and height set to 700x1000 pixels.
-
-    Parameters
-    ----------
-    uploaded_file : UploadedFile
-        The uploaded PDF file to display.
-
-    Returns
-    -------
-    None
-    """
     # Read file as bytes:
     bytes_data = uploaded_file.getvalue()
     
@@ -37,14 +23,6 @@ def display_pdf(uploaded_file):
 
 def load_streamlit_page():
 
-    """
-    Load the streamlit page with two columns. The left column contains a text input box for the user to input their OpenAI API key, and a file uploader for the user to upload a PDF document. The right column contains a header and text that greet the user and explain the purpose of the tool.
-
-    Returns:
-        col1: The left column Streamlit object.
-        col2: The right column Streamlit object.
-        uploaded_file: The uploaded PDF file.
-    """
     st.set_page_config(layout="wide", page_title="LLM Tool")
 
     # Design page layout with 2 columns: File uploader on the left, and other interactions on the right.

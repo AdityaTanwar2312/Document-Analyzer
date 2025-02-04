@@ -13,30 +13,13 @@ import pandas as pd
 import re
 
 def clean_filename(filename):
-    """
-    Remove "(number)" pattern from a filename 
-    (because this could cause error when used as collection name when creating Chroma database).
 
-    Parameters:
-        filename (str): The filename to clean
-
-    Returns:
-        str: The cleaned filename
-    """
     # Regular expression to find "(number)" pattern
     new_filename = re.sub(r'\s\(\d+\)', '', filename)
     return new_filename
 
 def get_pdf_text(uploaded_file): 
-    """
-    Load a PDF document from an uploaded file and return it as a list of documents
 
-    Parameters:
-        uploaded_file (file-like object): The uploaded PDF file to load
-
-    Returns:
-        list: A list of documents created from the uploaded PDF file
-    """
     try:
         # Read file content
         input_file = uploaded_file.read()
@@ -59,14 +42,7 @@ def get_pdf_text(uploaded_file):
 
 
 def split_document(documents, chunk_size, chunk_overlap):    
-    """
-    Function to split generic text into smaller chunks.
-    chunk_size: The desired maximum size of each chunk (default: 400)
-    chunk_overlap: The number of characters to overlap between consecutive chunks (default: 20).
 
-    Returns:
-        list: A list of smaller text chunks created from the generic text
-    """
     text_splitter = RecursiveCharacterTextSplitter(chunk_size=chunk_size,
                                           chunk_overlap=chunk_overlap,
                                           length_function=len,
@@ -76,17 +52,7 @@ def split_document(documents, chunk_size, chunk_overlap):
 
 
 def get_embedding_function(api_key):
-    """
-    Return an OpenAIEmbeddings object, which is used to create vector embeddings from text.
-    The embeddings model used is "text-embedding-ada-002" and the OpenAI API key is provided
-    as an argument to the function.
 
-    Parameters:
-        api_key (str): The OpenAI API key to use when calling the OpenAI Embeddings API.
-
-    Returns:
-        OpenAIEmbeddings: An OpenAIEmbeddings object, which can be used to create vector embeddings from text.
-    """
     embeddings = OpenAIEmbeddings(
         model="text-embedding-ada-002", openai_api_key=api_key
     )
@@ -94,17 +60,6 @@ def get_embedding_function(api_key):
 
 
 def create_vectorstore(chunks, embedding_function, file_name, vector_store_path="db"):
-
-    """
-    Create a vector store from a list of text chunks.
-
-    :param chunks: A list of generic text chunks
-    :param embedding_function: A function that takes a string and returns a vector
-    :param file_name: The name of the file to associate with the vector store
-    :param vector_store_path: The directory to store the vector store
-
-    :return: A Chroma vector store object
-    """
 
     # Create a list of unique ids for each document based on the content
     ids = [str(uuid.uuid5(uuid.NAMESPACE_DNS, doc.page_content)) for doc in chunks]
@@ -136,15 +91,6 @@ def create_vectorstore(chunks, embedding_function, file_name, vector_store_path=
 def create_vectorstore_from_texts(documents, api_key, file_name):
     
     # Step 2 split the documents  
-    """
-    Create a vector store from a list of texts.
-
-    :param documents: A list of generic text documents
-    :param api_key: The OpenAI API key used to create the vector store
-    :param file_name: The name of the file to associate with the vector store
-
-    :return: A Chroma vector store object
-    """
     docs = split_document(documents, chunk_size=1000, chunk_overlap=200)
     
     # Step 3 define embedding function
@@ -158,15 +104,6 @@ def create_vectorstore_from_texts(documents, api_key, file_name):
 
 def load_vectorstore(file_name, api_key, vectorstore_path="db"):
 
-    """
-    Load a previously saved Chroma vector store from disk.
-
-    :param file_name: The name of the file to load (without the path)
-    :param api_key: The OpenAI API key used to create the vector store
-    :param vectorstore_path: The path to the directory where the vector store was saved (default: "db")
-    
-    :return: A Chroma vector store object
-    """
     embedding_function = get_embedding_function(api_key)
     return Chroma(persist_directory=vectorstore_path, 
                   embedding_function=embedding_function, 
@@ -201,28 +138,13 @@ class ExtractedInfoWithSources(BaseModel):
     paper_authors: AnswerWithSources
 
 def format_docs(docs):
-    """
-    Format a list of Document objects into a single string.
 
-    :param docs: A list of Document objects
-
-    :return: A string containing the text of all the documents joined by two newlines
-    """
     return "\n\n".join(doc.page_content for doc in docs)
 
 # retriever | format_docs passes the question through the retriever, generating Document objects, and then to format_docs to generate strings;
 # RunnablePassthrough() passes through the input question unchanged.
 def query_document(vectorstore, query, api_key):
 
-    """
-    Query a vector store with a question and return a structured response.
-
-    :param vectorstore: A Chroma vector store object
-    :param query: The question to ask the vector store
-    :param api_key: The OpenAI API key to use when calling the OpenAI Embeddings API
-
-    :return: A pandas DataFrame with three rows: 'answer', 'source', and 'reasoning'
-    """
     llm = ChatOpenAI(model="gpt-4o-mini", api_key=api_key)
 
     retriever=vectorstore.as_retriever(search_type="similarity")
@@ -252,4 +174,3 @@ def query_document(vectorstore, query, api_key):
     structured_response_df = pd.DataFrame([answer_row, source_row, reasoning_row], columns=df.columns, index=['answer', 'source', 'reasoning'])
   
     return structured_response_df.T
-
